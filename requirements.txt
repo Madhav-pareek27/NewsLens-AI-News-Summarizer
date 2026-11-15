@@ -1,0 +1,8 @@
+langgraph>=1.0,<2
+langchain-groq>=1.0,<2
+streamlit>=1.40,<2
+python-dotenv>=1.0,<2
+requests>=2.32,<3
+beautifulsoup4>=4.12,<5
+trafilatura>=2.0,<3
+graphviz>=0.20,<1

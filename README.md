@@ -40,6 +40,17 @@ NewsLens is a Python/Streamlit application designed to help users understand lon
 | 🌙 **Streamlit interface** | Responsive dark-themed dashboard with workflow and status views |
 | 🧪 **Automated tests** | Tests for workflow branching, fetching, and local storage |
 
+## 📸 Application Screenshots
+
+### 🖥️ NewsLens Dashboard
+
+![NewsLens Dashboard](assets/screenshots/dashboard.png)
+
+### 🧠 AI-Generated News Summary
+
+![NewsLens Summary Result](assets/screenshots/summary-result.png)
+
+
 ## 🧩 LangGraph workflow
 
 The application has **exactly five LangGraph nodes** and a conditional route after processing.

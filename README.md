@@ -1,130 +1,241 @@
-# NewsLens 2.0 — News Summarizer Agent
+<div align="center">
 
-**Updated professional dashboard** with responsive dark UI, clear non-truncated status cards, a visual word threshold, execution traces, searchable/filterable history, and robust handling of Google News home/search URLs.
+![NewsLens 2.0 — AI News Intelligence](assets/newslens-banner.png)
 
-Important: the Google News homepage (`https://news.google.com/home?...`) is **not a news article**. Choose an individual story URL or paste the actual article text. A legitimate article under 200 words is still logged directly without calling Groq.
+# NewsLens 2.0 — AI News Summarizer
 
-A Streamlit app that accepts **news text or a public URL**, cleans/extracts content, routes **fewer than 200 words directly to execution logging**, and otherwise calls **Groq** to summarize and classify the article. Every run is saved to a **local SQLite database**.
+### Understand more. Read less.
 
-## Workflow (exactly 5 nodes)
+An intelligent **news summarization and classification dashboard** that transforms article text or public article URLs into concise insights through a **five-node LangGraph workflow**, powered by **Groq**.
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-6B57FF?style=for-the-badge)](https://www.langchain.com/langgraph)
+[![Groq](https://img.shields.io/badge/Groq-LLM_API-F05A28?style=for-the-badge)](https://groq.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![SQLite](https://img.shields.io/badge/SQLite-Run_History-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+
+**[Features](#-features) • [How it works](#-langgraph-workflow) • [Get started](#-quick-start) • [Project structure](#-project-structure) • [Testing](#-testing)**
+
+</div>
+
+---
+
+## ✨ Overview
+
+NewsLens is a Python/Streamlit application designed to help users understand long news articles without reading every paragraph. It accepts pasted article text or an article URL, extracts and cleans the content, checks its length, and—when enough readable content is available—uses Groq to summarize and categorize it. Every attempt is recorded locally for review.
+
+> **Key behavior:** Articles with **200 or more cleaned words** enter the Groq summarization pipeline. Inputs with **fewer than 200 words**, and processing failures, go directly to execution logging. The threshold check is a conditional edge, **not a sixth node**.
+
+## 🚀 Features
+
+| Capability | Description |
+|:--|:--|
+| 📰 **Dual input** | Paste article text or submit a public article URL |
+| 🧹 **Content processing** | Extract, clean, and count readable article words |
+| 🧠 **AI summaries** | Generate concise summaries through Groq for eligible inputs |
+| 🏷️ **Topic classification** | Assign a category such as Technology, Business, Sports, World, and more |
+| 🔀 **Conditional routing** | Bypass the Groq calls when cleaned content has fewer than 200 words |
+| 🗂️ **Execution history** | Save run results and node-by-node events in a local SQLite database |
+| 🔎 **History dashboard** | Inspect previous runs and use the app's history/search/filter tools |
+| 🌙 **Streamlit interface** | Responsive dark-themed dashboard with workflow and status views |
+| 🧪 **Automated tests** | Tests for workflow branching, fetching, and local storage |
+
+## 🧩 LangGraph workflow
+
+The application has **exactly five LangGraph nodes** and a conditional route after processing.
 
 ```mermaid
 flowchart TD
-    A[1. Input] --> B[2. Processing / clean + count]
-    B --> C{At least 200 words?}
-    C -->|Yes| D[3. Summary - Groq]
-    D --> E[4. Category - Groq]
-    E --> F[5. Execution log - SQLite]
-    C -->|No or error| F
+    A["1 · Input<br/>Text or article URL"] --> B["2 · Processing<br/>Extract · Clean · Count"]
+    B --> C{"Cleaned text<br/>≥ 200 words?"}
+    C -->|Yes| D["3 · Summary<br/>Groq LLM"]
+    D --> E["4 · Category<br/>Groq LLM"]
+    E --> F["5 · Execution Log<br/>SQLite"]
+    C -->|No / processing error| F
+    F --> G(["Result + history"])
+    classDef step fill:#132B46,stroke:#16D8F3,color:#F6FBFF,stroke-width:1.5px;
+    classDef decision fill:#40296C,stroke:#A78BFA,color:#FFFFFF,stroke-width:1.5px;
+    classDef output fill:#133F43,stroke:#1CC8B5,color:#FFFFFF;
+    class A,B,D,E,F step;
+    class C decision;
+    class G output;
 ```
 
-The diamond is **a conditional edge, not a sixth LangGraph node**. Exactly 200 words goes to summary; 199 words goes to the log.
+**Node responsibilities**
 
-## Run on Windows (PowerShell)
+1. **Input** — validates news text or a URL.
+2. **Processing** — obtains article text, cleans content, counts words, and determines routing.
+3. **Summary** — requests a factual, concise news summary from Groq.
+4. **Category** — assigns one supported news category from Groq output.
+5. **Execution log** — saves the run state and node events to SQLite, including skipped/error runs.
 
-Requirements: Python **3.11+**, internet for live news URLs and the Groq API.
+**Example:** A cleaned article with **199 words** is logged without an LLM call; **200 words** is eligible for the Groq summary and classification nodes.
+
+## 🛠️ Tech stack
+
+- **Frontend:** Streamlit with a custom dark theme
+- **Language:** Python 3.11+
+- **Workflow:** LangGraph
+- **LLM integration:** LangChain Groq / Groq API
+- **Article extraction:** Requests, Beautiful Soup, and Trafilatura
+- **Persistence:** SQLite
+- **Configuration:** `python-dotenv` and local `.env`
+
+## ⚡ Quick start
+
+### Prerequisites
+
+- Python **3.11 or newer**
+- A Groq API key from [Groq Console](https://console.groq.com/keys)
+- Internet access for Groq requests and fetching online articles
+
+### 1. Clone the repository
 
 ```powershell
-# Only use cd news_summarizer_agent if your prompt is in the parent folder.
-# If your terminal already ends in \news_summarizer_agent>, skip the cd command.
+git clone https://github.com/Madhav-pareek27/NewsLens-AI-News-Summarizer.git
+cd NewsLens-AI-News-Summarizer
+```
+
+If you already have the project locally, **open the directory containing `app.py` and `requirements.txt`** and skip cloning.
+
+### 2. Create a virtual environment (Windows PowerShell)
+
+```powershell
 py -m venv .venv
-.venv\Scripts\Activate.ps1
+.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
+```
+
+### 3. Set up your Groq key
+
+```powershell
 Copy-Item .env.example .env
 ```
 
-Open `.env` in Notepad or VS Code. Replace `your_groq_api_key_here` with your Groq API key from <https://console.groq.com/keys>. Do not include quotes and **never paste your key into GitHub or share it**.
+Open the newly created **`.env`** file and enter your *own* Groq key:
 
-```powershell
-streamlit run app.py
+```dotenv
+GROQ_API_KEY=replace_with_your_own_key
+GROQ_MODEL=openai/gpt-oss-20b
 ```
 
-The local app normally opens at <http://localhost:8501>.
+> **Security:** `.env` is private and must **never** be pushed to GitHub. The committed `.env.example` contains placeholders only. The model identifier may need adjustment if model availability changes; consult the Groq console for a model available to your account.
 
-**PowerShell activation blocked?** Instead of activating, run:
+### 4. Start NewsLens
 
 ```powershell
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m streamlit run app.py
+python -m streamlit run app.py
 ```
 
-## Run on macOS/Linux
+Open **http://localhost:8501** in your browser.
+
+**PowerShell blocks activation?** You can run without activating the environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+<details>
+<summary><b>macOS / Linux setup</b></summary>
 
 ```bash
-cd news_summarizer_agent
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 cp .env.example .env
-# Edit .env and insert GROQ_API_KEY
-streamlit run app.py
+# Open .env and set GROQ_API_KEY
+python -m streamlit run app.py
 ```
 
-## Files
+</details>
 
-- `app.py` — updated Streamlit UI (Analyze, Execution history, Workflow tabs).
-- `.streamlit/config.toml` — dark teal Streamlit theme.
-- `workflow.py` — five LangGraph nodes, Groq calls, branching and orchestration.
-- `news_fetcher.py` — safe-ish public URL validation, article extraction, text cleaning.
-- `storage.py` — persistent SQLite run records.
-- `tests/test_workflow.py` — mocked graph tests; no live API key necessary.
-- `tests/test_fetcher.py` — Google News home/search URL guard and cleaning tests.
-- `tests/test_storage.py` — local SQLite aggregation and run history tests.
-- `.env.example` — environment variables (copy to `.env`).
-- `data/news_runs.db` — local history file, created on first run.
+## 🖥️ Application preview
 
-## Persisted data
+The Streamlit application includes an **Analyze** view, a **Workflow** view, and an **Execution History** view.
 
-Each record stores `run_id`, UTC time, input type, source URL, original content, cleaned content, word count, summary, category, status, errors, model ID and node-by-node events. API keys are **not persisted**. The History tab can inspect and export complete runs. Treat the database as sensitive if you paste confidential information.
+<!-- To add genuine screenshots later, create assets/screenshots and then remove the
+     HTML comment wrapper around the following two lines:
 
-## Sample tests
+![NewsLens dashboard](assets/screenshots/dashboard.png)
+![NewsLens summary output](assets/screenshots/summary-result.png)
 
-```bash
+Do not commit a fake or empty screenshot. -->
+
+**Want to show the UI here?** Run the app, take a screenshot of the main dashboard and an actual completed summary, save them as `assets/screenshots/dashboard.png` and `assets/screenshots/summary-result.png`, then uncomment the lines above.
+
+## 📁 Project structure
+
+```text
+NewsLens-AI-News-Summarizer/
+├── .streamlit/
+│   └── config.toml          # Streamlit theme
+├── assets/
+│   └── newslens-banner.png # README hero image
+├── data/                    # Local SQLite history (do not commit personal data)
+├── tests/                   # Workflow, fetcher and storage tests
+├── .env.example             # Safe API-key template
+├── .gitignore               # Excludes secrets and generated files
+├── app.py                   # Streamlit interface
+├── news_fetcher.py          # URL ingestion and article extraction
+├── workflow.py              # Five-node LangGraph agent
+├── storage.py               # SQLite persistence
+├── requirements.txt         # Dependencies
+└── README.md                # Project guide
+```
+
+The real `.env` and `.venv` should exist **only on your local machine**, not in the public repository.
+
+## 🧪 Testing
+
+Run tests locally without a live Groq request for the mocked cases:
+
+```powershell
 python -m pip install pytest
 python -m pytest -q
 ```
 
-The mocked test cases cover **199 words**, **200 words**, URL ingestion and input errors. Live Groq integration requires an API key and network access.
+The test suite covers workflow branching, public URL handling, and SQLite behavior. For a full end-to-end Groq check, enter a valid API key and analyze a supported article of at least 200 cleaned words.
 
-## Operational notes
+## 💡 How to use
 
-- The default model `openai/gpt-oss-20b` is supported on Groq's developer tier. Set `GROQ_MODEL` to a supported model ID from the Groq model catalog if you wish to change it.
-- Some websites are paywalled or render their content only in JavaScript. For these sites, paste the article text.
-- News URL fetching refuses local/private IPs, limits redirects/download size and enforces HTTP(S); production deployments should **also** use network-level egress filtering to mitigate DNS rebinding and similar SSRF risks.
-- This is a deterministic five-node **agent workflow** (fixed actions with conditional routing), not an autonomous tool-using research agent. It only summarizes what it receives and cannot independently verify claims in the news.
-- This educational implementation handles a single article per invocation. Extremely long articles over 60,000 characters are rejected rather than silently truncated.
+1. Start the Streamlit dashboard.
+2. Choose **text** or **URL** input.
+3. Paste news content or an individual public article link.
+4. Start the analysis.
+5. Review the word count, AI-generated summary, classification, and execution trace.
+6. Revisit saved runs in the **Execution History** view.
 
-## Updating an existing installation
+**Note:** A news homepage, search page, or paywalled / JavaScript-heavy URL may not provide extractable article text. When this happens, paste the article text directly.
 
-If NewsLens is already running, press **Ctrl+C** in the VS Code terminal.
-Back up your `.env` and `data/news_runs.db`, then replace `app.py`, `workflow.py`,
-`news_fetcher.py`, `storage.py` and add `.streamlit/config.toml` (or extract the ZIP
-into a new folder). **Do not overwrite your existing `.env` or SQLite database.**
+## 🔐 Privacy and limitations
 
-Check that `.env` contains **only a real model ID** on the `GROQ_MODEL` line:
+- **Groq is a cloud API**, so eligible article text is sent to Groq for processing. This is **not** a fully offline app.
+- Your **Groq API key** belongs in `.env`, not in source code or the public repository.
+- The SQLite execution log can store the original article text, source URL, summaries, model details, status, and error events. Do not publish databases containing personal or confidential content.
+- The project summarizes **provided material**; it does not independently fact-check, verify sources, or guarantee that an article is accurate.
+- Articles with fewer than 200 cleaned words are logged but not summarized. Very long inputs above the configured limit are rejected.
+- Run tests and review dependency/security updates before deploying the application publicly.
 
-```env
-GROQ_API_KEY=your_actual_key
-GROQ_MODEL=openai/gpt-oss-20b
-```
+## 🧯 Troubleshooting
 
-Python/debug code in the old sidebar was likely caused by an incorrect
-`GROQ_MODEL` value being displayed in a code widget. The updated app validates
-model names and uses the default when malformed.
+| Issue | What to check |
+|:--|:--|
+| Groq key missing | Verify `.env` exists beside `app.py` and contains `GROQ_API_KEY` |
+| No AI summary | Ensure the cleaned article has **at least 200 words** |
+| URL extraction fails | Try an individual article URL or paste the article text |
+| PowerShell activation error | Use the direct `.venv\Scripts\python.exe` commands above |
+| Wrong model / unavailable model | Update `GROQ_MODEL` to a supported model identifier |
+| Data from old runs | Local run history is stored in SQLite and can persist between sessions |
 
-Run from the folder containing `app.py` and `requirements.txt`:
+## 👨‍💻 Project
 
-```powershell
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
-```
+Built as a hands-on project exploring **agent orchestration, conditional routing, LLM integration, web content processing, and explainable execution traces**.
 
-Refresh `http://localhost:8501` (Ctrl+Shift+R).
+<div align="center">
 
-### Troubleshooting
-- The Groq status **Key found** means the env variable exists; the API connection
-  is only confirmed when a 200+ word article calls Groq.
-- The article must contain 200+ **cleaned** words for summarization; shorter
-  articles are intentionally logged and skipped.
-- Some news sites have paywalls, bot protection, or JavaScript-rendered pages.
-  Paste article text when extraction fails.
+**Built with Python · LangGraph · Streamlit · Groq**
+
+[GitHub repository](https://github.com/Madhav-pareek27/NewsLens-AI-News-Summarizer)
+
+</div>
